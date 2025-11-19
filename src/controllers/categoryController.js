@@ -3,10 +3,17 @@ const Category = require("../models/categoryModel");
 // Obtener todas las categorías
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
+    const categories = await Category.find().lean();
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ mensaje: error.message });
+    console.error("Error en getCategories:", error);
+    res.status(500).json({ 
+      mensaje: error.message || "Error al obtener categorías",
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

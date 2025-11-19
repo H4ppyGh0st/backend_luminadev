@@ -4,6 +4,9 @@ const User = require("../models/userModel");
 // Registro
 exports.register = async (req, res) => {
   try {
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     const { nombre, correo, contraseña } = req.body;
 
     // Validar campos
@@ -65,6 +68,10 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Verificar conexión antes de buscar usuario
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     // Buscar usuario en la base de datos
     const user = await User.findOne({ correo: correoNormalizado });
     if (!user) {
@@ -95,10 +102,17 @@ exports.login = async (req, res) => {
 // Obtener todos los usuarios (solo para administradores)
 exports.getUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-contraseña"); // Excluir contraseñas
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
+    const users = await User.find().select("-contraseña").lean(); // Excluir contraseñas
     res.json(users);
   } catch (error) {
-    res.status(500).json({ mensaje: error.message });
+    console.error("Error en getUsers:", error);
+    res.status(500).json({ 
+      mensaje: error.message || "Error al obtener usuarios",
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

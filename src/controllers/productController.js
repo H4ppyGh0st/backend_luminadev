@@ -63,10 +63,18 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const products = await productsModel.find();
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
+    // Usar lean() para obtener objetos planos y más rápidos
+    const products = await productsModel.find().lean();
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error en getProducts:", error);
+    res.status(500).json({ 
+      message: error.message || "Error al obtener productos",
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

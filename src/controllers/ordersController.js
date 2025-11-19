@@ -29,23 +29,36 @@ exports.createOrder = async (req, res) => {
 // Obtener TODAS las órdenes
 exports.getOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
+    const orders = await Order.find().lean();
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al obtener las órdenes", error });
+    console.error("Error en getOrders:", error);
+    res.status(500).json({ 
+      mensaje: "Error al obtener las órdenes",
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
 // Obtener órdenes de un usuario por ID
 exports.getOrdersByUser = async (req, res) => {
   try {
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     const { usuarioId } = req.params;
-
-    const orders = await Order.find({ usuarioId });
+    const orders = await Order.find({ usuarioId }).lean();
 
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al obtener órdenes del usuario", error });
+    console.error("Error en getOrdersByUser:", error);
+    res.status(500).json({ 
+      mensaje: "Error al obtener órdenes del usuario",
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

@@ -24,7 +24,9 @@ connectDB();
 // Configuración de CORS
 // Permitir peticiones desde el frontend en desarrollo y producción
 const allowedOrigins = [
-  'http://localhost:3000',           // React dev server (puerto por defecto)
+  'http://localhost:4000',           // React dev server (puerto por defecto)
+  'http://localhost:4001',           // React dev server (puerto alternativo)
+  'http://localhost:3000',           // React dev server (puerto alternativo)
   'http://localhost:3001',           // React dev server (puerto alternativo)
   'https://lumina-dev-hrh2.vercel.app', // Frontend en producción (Vercel)
   // Puedes agregar más orígenes aquí si tienes múltiples deployments
@@ -79,5 +81,11 @@ app.use("/", routes);
 // Puerto
 const PORT = process.env.PORT || 4000;
 
-// Iniciar servidor
-app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
+// Iniciar servidor solo si no estamos en Vercel (serverless)
+// En Vercel, exportamos la app directamente
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
+}
+
+// Exportar para Vercel Serverless Functions
+module.exports = app;

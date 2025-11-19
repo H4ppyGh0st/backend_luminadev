@@ -3,6 +3,9 @@ const Cart = require("../models/cartModel");
 // Crear carrito (si no existe)
 exports.createCart = async (req, res) => {
   try {
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     const { usuarioId } = req.body;
 
     // Verificar si ya existe un carrito del usuario
@@ -28,7 +31,10 @@ exports.createCart = async (req, res) => {
 // Obtener carrito por usuario
 exports.getCartByUser = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ usuarioId: req.params.usuarioId });
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
+    const cart = await Cart.findOne({ usuarioId: req.params.usuarioId }).lean();
 
     if (!cart) {
       return res.status(404).json({ message: "Carrito no encontrado" });
@@ -37,13 +43,20 @@ exports.getCartByUser = async (req, res) => {
     res.json(cart);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error en getCartByUser:", error);
+    res.status(500).json({ 
+      message: error.message || "Error al obtener carrito",
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
 // Agregar un producto al carrito
 exports.addProduct = async (req, res) => {
   try {
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     const { usuarioId, productoId, precio } = req.body;
 
     const cart = await Cart.findOne({ usuarioId });
@@ -68,6 +81,9 @@ exports.addProduct = async (req, res) => {
 // Eliminar un producto del carrito
 exports.removeProduct = async (req, res) => {
   try {
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     const { usuarioId, productoId, precio } = req.body;
 
     const cart = await Cart.findOne({ usuarioId });
@@ -93,6 +109,9 @@ exports.removeProduct = async (req, res) => {
 // Vaciar carrito
 exports.clearCart = async (req, res) => {
   try {
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     const { usuarioId } = req.body;
 
     const cart = await Cart.findOne({ usuarioId });
@@ -115,6 +134,9 @@ exports.clearCart = async (req, res) => {
 // Eliminar carrito completo
 exports.deleteCart = async (req, res) => {
   try {
+    const { ensureConnection } = require("../utils/dbHelper");
+    await ensureConnection();
+    
     const { usuarioId } = req.params;
 
     const cart = await Cart.findOneAndDelete({ usuarioId });
