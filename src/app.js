@@ -1,4 +1,5 @@
 ﻿const express = require("express");
+const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const connectDB = require("./config/database");
@@ -20,7 +21,51 @@ if (!fs.existsSync(uploadsDir)) {
 
 connectDB();
 
+// Configuración de CORS
+// Permitir peticiones desde el frontend en desarrollo y producción
+const allowedOrigins = [
+  'http://localhost:3000',           // React dev server (puerto por defecto)
+  'http://localhost:3001',           // React dev server (puerto alternativo)
+  'https://lumina-dev-hrh2.vercel.app', // Frontend en producción (Vercel)
+  // Puedes agregar más orígenes aquí si tienes múltiples deployments
+];
 
+// Si hay una variable de entorno con orígenes adicionales, agregarlos
+if (process.env.FRONTEND_URL) {
+  const frontendUrls = process.env.FRONTEND_URL.split(',').map(url => url.trim());
+  allowedOrigins.push(...frontendUrls);
+}
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir peticiones sin origen (como Postman, mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Si el origen está en la lista de permitidos, permitirlo
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // En desarrollo, permitir cualquier origen localhost
+      if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+        callback(null, true);
+      } 
+      // Permitir cualquier subdominio de vercel.app (para diferentes deployments)
+      else if (origin.includes('.vercel.app')) {
+        callback(null, true);
+      } 
+      else {
+        // En producción, solo permitir orígenes específicos
+        console.warn(`Origen bloqueado por CORS: ${origin}`);
+        callback(new Error('No permitido por CORS'));
+      }
+    }
+  },
+  credentials: true, // Permitir cookies y headers de autenticación
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Esto hace que /uploads/products/imagen.png sea accesible desde el navegador
